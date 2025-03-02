@@ -9,7 +9,8 @@
         "skipLibCheck": true,
         "baseUrl": "./src",
         "paths": {
-            "@/*": ["*.ts"]
+            "@/*": ["*.ts"],
+            "@db": ["services/db/db.ts"],
         },
         "outDir": "./dist"
     },

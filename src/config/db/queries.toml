@@ -1,0 +1,5 @@
+[queries]
+get = '''
+    SELECT * FROM basic 
+    WHERE id = $1
+'''
