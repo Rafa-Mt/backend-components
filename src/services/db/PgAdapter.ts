@@ -1,7 +1,7 @@
 import { PoolConfig, Pool, QueryResult } from 'pg';
-import { DbAdapter } from '@db';
+import { DbAdapter } from '@/services/db/dbManager';
 
-export class PgAdapter implements DbAdapter {
+export default class PgAdapter implements DbAdapter {
     private pool!: Pool;
     private config: PoolConfig
     constructor(config: PoolConfig) {

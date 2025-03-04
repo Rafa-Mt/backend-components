@@ -10,7 +10,7 @@
         "baseUrl": "./src",
         "paths": {
             "@/*": ["*.ts"],
-            "@db": ["services/db/db.ts"],
+            "@db/*": ["services/db/*.ts"],
         },
         "outDir": "./dist"
     },

@@ -27,16 +27,19 @@ export default class DbManager<T extends DbAdapter> {
     private allowTransactions: boolean = false;
     private modelPath?: string;
     private queriesPath?: string;
-    // private queries: Map<string, string>;
+    private queries = new Map<string, string>()
 
-    constructor(adapter: T, { allowDirectQueries, allowTransactions }: DbManagerArgs) {
+    constructor(adapter: T, { allowDirectQueries, allowTransactions, modelPath, queriesPath }: DbManagerArgs) {
         this.adapter = adapter;
         allowDirectQueries && (this.allowDirectQueries = allowDirectQueries);
         allowTransactions && (this.allowTransactions = allowTransactions);
+        modelPath && (this.modelPath = modelPath);
+        queriesPath && (this.queriesPath = queriesPath);
     }
 
-    public async connect(): Promise<DbManager<T>> {
+    public async connect(): Promise<this> {
         await this.adapter.connect();
+        this.queriesPath && (this.queries = await DbManager.loadQueriesFile(this.queriesPath));
         this.isConnected = true;
         return this;
     }
@@ -52,6 +55,17 @@ export default class DbManager<T extends DbAdapter> {
         return await this.adapter.query(query, args);
     }
 
+    public async executeQueryByName(name: string, ...args: any[]): Promise<any> {
+        if (this.queries.size === 0)
+            throw new Error("Queries are not loaded");
+
+        const query = this.queries.get(name) ?? (new Error("Query not found"));
+        if (query instanceof Error) 
+            throw query;
+
+        return await this.query(query, args);
+    }
+
     public async executeQuery(query: string): Promise<any> {
         if (!this.allowDirectQueries) 
             throw new Error("Direct queries are not allowed");
@@ -59,7 +73,7 @@ export default class DbManager<T extends DbAdapter> {
         return await this.query(query)
     }
 
-    async beginTransaction(): Promise<DbManager<T>> {
+    public async beginTransaction(): Promise<this> {
         if (!this.allowTransactions) 
             throw new Error("Transactions are not allowed");
 
@@ -67,7 +81,7 @@ export default class DbManager<T extends DbAdapter> {
         return this;
     }
 
-    async commitTransaction(): Promise<DbManager<T>> {
+    public async commitTransaction(): Promise<this> {
         if (!this.allowTransactions) 
             throw new Error("Transactions are not allowed");
 
@@ -75,11 +89,29 @@ export default class DbManager<T extends DbAdapter> {
         return this;
     }
 
-    async rollbackTransaction(): Promise<DbManager<T>> {
+    public async rollbackTransaction(): Promise<this> {
         if (!this.allowTransactions) 
             throw new Error("Transactions are not allowed");
 
         await this.query("ROLLBACK");
+        return this;
+    }
+
+    public async buildFromQueries(queries: string[]): Promise<this> {
+        queries.forEach((query) => {  
+            this.executeQuery(query);
+        });
+        return this;
+    }
+
+    public async buildFromModelFile(): Promise<this> {
+        if (!this.modelPath) 
+            throw new Error("Model path is not provided");
+
+        const model = await DbManager.loadModelFile(this.modelPath);
+        model.forEach((query) => {  
+            this.query(query);
+        });
         return this;
     }
 
