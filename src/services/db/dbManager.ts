@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import yaml from "js-yaml";
 import toml from "toml";
@@ -49,10 +49,8 @@ export default class DbManager<T extends DbAdapter> {
     }
 
     private async query(query: string, ...args: any[]): Promise<any> {
-        if (!this.isConnected) 
-            throw new Error("DB is not connected");
-        
-        return await this.adapter.query(query, args);
+        const response = await this.adapter.query(query, ...args);
+        return response.rows;
     }
 
     public async executeQueryByName(name: string, ...args: any[]): Promise<any> {
@@ -63,14 +61,14 @@ export default class DbManager<T extends DbAdapter> {
         if (query instanceof Error) 
             throw query;
 
-        return await this.query(query, args);
+        return await this.query(query, ...args);
     }
 
-    public async executeQuery(query: string): Promise<any> {
+    public async executeQuery(query: string, ...args: any[]): Promise<any> {
         if (!this.allowDirectQueries) 
             throw new Error("Direct queries are not allowed");
 
-        return await this.query(query)
+        return await this.query(query, ...args);
     }
 
     public async beginTransaction(): Promise<this> {
@@ -98,9 +96,9 @@ export default class DbManager<T extends DbAdapter> {
     }
 
     public async buildFromQueries(queries: string[]): Promise<this> {
-        queries.forEach((query) => {  
-            this.executeQuery(query);
-        });
+        for (const query of queries) {
+            await this.query(query);
+        }
         return this;
     }
 
@@ -109,9 +107,10 @@ export default class DbManager<T extends DbAdapter> {
             throw new Error("Model path is not provided");
 
         const model = await DbManager.loadModelFile(this.modelPath);
-        model.forEach((query) => {  
-            this.query(query);
-        });
+
+        for (const query of model) {
+            await this.query(query);
+        }
         return this;
     }
 

@@ -54,3 +54,7 @@ typings/
 # Temporary folders
 tmp/
 temp/
+
+# Config
+
+src/config/

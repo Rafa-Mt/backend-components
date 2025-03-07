@@ -1,10 +1,11 @@
-import { PoolConfig, Pool, QueryResult } from 'pg';
+import { Client, QueryResult } from 'pg';
+import Pool, { Config } from 'pg-pool';
 import { DbAdapter } from '@/services/db/dbManager';
 
 export default class PgAdapter implements DbAdapter {
-    private pool!: Pool;
-    private config: PoolConfig
-    constructor(config: PoolConfig) {
+    private pool!: Pool<Client>;
+    private config: Config<Client>
+    constructor(config: Config<Client>) {
         this.config = config;
     }
 

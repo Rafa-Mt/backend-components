@@ -1,5 +1,5 @@
 [queries]
-get = '''
-    SELECT * FROM basic 
-    WHERE id = $1
+get-users = '''
+    SELECT * FROM users
 '''
+
