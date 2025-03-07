@@ -1,4 +1,6 @@
-import { sign, verify, SignOptions } from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
+const { sign, verify } = jwt;
+
 import { config as dotenv } from 'dotenv';
 dotenv();
 

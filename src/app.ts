@@ -1,7 +1,9 @@
-import express, { Request, Response, json } from 'express';
+import express, { Request, RequestHandler, Response, json } from 'express';
 import { config as dotenv } from 'dotenv';
 import DbManager from "@db/dbManager";
 import PgAdapter from '@db/pgAdapter';
+import SessionManager from '@session/sessionManager';
+import { buildManagerRoute, CustomRequest } from './services/session/sessionMiddleware.js';
 
 dotenv();
 
@@ -19,6 +21,16 @@ const dbManager = new DbManager(dbAdapter, {
 	queriesPath: "src/config/db/queries.toml"
 });
 await dbManager.connect();
+
+interface UserType {
+	email: string;
+	password: string;
+}
+
+const sessionManager = new SessionManager<UserType>({
+	secret: process.env.SESSION_SECRET as string,
+	expiresIn: '5d'
+})
 
 app.get('/', (req, res) => {
 	res.send('Hello World');
@@ -58,7 +70,7 @@ app.get('/build', async (req: Request, res: Response) => {
 	try {
 		await dbManager.buildFromModelFile();
 		const result = await dbManager
-			.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname = 'public'") as Record<string, any>[];
+			.executeQuery("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
 
 		res.send(result);
 	}
@@ -66,6 +78,25 @@ app.get('/build', async (req: Request, res: Response) => {
 		console.log(e);
 		res.send('Failed to create table');
 	}
+})
+
+app.post('/login', async (req: Request, res: Response) => {
+	const body = req.body as { email: string, password: string };
+
+	try {
+		const token = sessionManager.createToken(body);
+		res.send({...body, token});
+	}
+	catch (e) {
+		console.log(e);
+		res.send('Failed to login');
+	}
+})
+
+const sessionRoute = buildManagerRoute(sessionManager) as RequestHandler;
+
+app.get('/verify', sessionRoute, async (req: Request, res: Response) => {
+	res.send((req as CustomRequest<UserType>).user);
 })
 
 app.listen(port, () => {

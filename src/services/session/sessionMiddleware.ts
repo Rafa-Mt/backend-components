@@ -2,7 +2,7 @@ import SessionManager from "@session/sessionManager"
 
 import { NextFunction, Request, Response } from "express";
 
-interface CustomRequest<UserType> extends Request {
+export interface CustomRequest<UserType> extends Request {
     user?: UserType;
 }
 
