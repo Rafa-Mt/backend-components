@@ -48,12 +48,12 @@ export default class DbManager<T extends DbAdapter> {
         await this.adapter.disconnect();
     }
 
-    private async query(query: string, ...args: any[]): Promise<any> {
+    private async query<Result>(query: string, ...args: any[]): Promise<Result> {
         const response = await this.adapter.query(query, ...args);
         return response.rows;
     }
 
-    public async executeQueryByName(name: string, ...args: any[]): Promise<any> {
+    public async executeQueryByName<Result>(name: string, ...args: any[]): Promise<Result> {
         if (this.queries.size === 0)
             throw new Error("Queries are not loaded");
 
@@ -64,7 +64,7 @@ export default class DbManager<T extends DbAdapter> {
         return await this.query(query, ...args);
     }
 
-    public async executeQuery(query: string, ...args: any[]): Promise<any> {
+    public async executeQuery<Result>(query: string, ...args: any[]): Promise<Result> {
         if (!this.allowDirectQueries) 
             throw new Error("Direct queries are not allowed");
 
@@ -97,7 +97,7 @@ export default class DbManager<T extends DbAdapter> {
 
     public async buildFromQueries(queries: string[]): Promise<this> {
         for (const query of queries) {
-            await this.query(query);
+            await this.executeQuery(query);
         }
         return this;
     }

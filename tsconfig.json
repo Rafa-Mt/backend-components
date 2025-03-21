@@ -11,7 +11,8 @@
         "paths": {
             "@/*": ["*.ts"],
             "@db/*": ["services/db/*.ts"],
-            "@session/*": ["services/session/*.ts"],
+            "@security/*": ["services/security/*.ts"],
+            "@routes/*": ["services/routes/*.ts"]
         },
         "outDir": "./dist"
     },
